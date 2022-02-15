@@ -47,17 +47,30 @@ SYSTEM_USAGE = prometheus_client.Gauge('system_usage',
 CHAIN_STATS = prometheus_client.Gauge('chain_stats',
                               'Stats about the global chain', ['resource_type'])
 VAL = prometheus_client.Gauge('validator_height',
-                              "Height of the validator's blockchain",
-                              ['resource_type','validator_name'])
+                              "Height of the validator's blockchain")
 INCON = prometheus_client.Gauge('validator_inconsensus',
                               'Is validator currently in consensus group',
                               ['validator_name'])
 BLOCKAGE = prometheus_client.Gauge('validator_block_age',
                               'Age of the current block',
                              ['resource_type','validator_name'])
-HBBFT_PERF = prometheus_client.Gauge('validator_hbbft_perf',
-                              'HBBFT performance metrics from perf, only applies when in CG',
-                             ['resource_type','subtype','validator_name'])
+HBBFT_PERF_PENALTY = prometheus_client.Gauge('validator_hbbft_perf_penalty',
+                              'Penalty, only applies when in CG')
+HBBFT_PERF_BBA_TOTAL = prometheus_client.Gauge('validator_hbbft_perf_bba_total',
+                            'BBA_total, only applies when in CG')
+HBBFT_PERF_BBA_VOTES = prometheus_client.Gauge('validator_hbbft_perf_bba_votes',
+                              'BBA_votes, only applies when in CG')
+HBBFT_PERF_SEEN_TOTAL = prometheus_client.Gauge('validator_hbbft_perf_seen_total',
+                            'Seen total, only applies when in CG')
+HBBFT_PERF_SEEN_VOTES = prometheus_client.Gauge('validator_hbbft_perf_seen_votes',
+                              'Seen votes, only applies when in CG')
+HBBFT_PERF_BBA_LAST = prometheus_client.Gauge('validator_hbbft_perf_bba_last',
+                            'BBA_last, only applies when in CG')
+HBBFT_PERF_SEEN_LAST = prometheus_client.Gauge('validator_hbbft_perf_seen_last',
+                              'Seen last, only applies when in CG')
+HBBFT_PERF_TENTURE = prometheus_client.Gauge('validator_hbbft_perf_tenure',
+                            'Tenure, only applies when in CG')
+
 CONNECTIONS = prometheus_client.Gauge('validator_connections',
                               'Number of libp2p connections ',
                              ['resource_type','validator_name'])
@@ -289,7 +302,7 @@ def collect_miner_height(docker_container, miner_name):
   out = docker_container.exec_run('miner info height')
   log.debug(out.output)
   txt = out.output.decode('utf-8').rstrip("\n")
-  VAL.labels('Height', miner_name).set(out.output.split()[1])
+  VAL.set(out.output.split()[1])
 
 def collect_in_consensus(docker_container, miner_name):
   # check if currently in consensus group
@@ -355,14 +368,14 @@ def collect_hbbft_performance(docker_container, miner_name):
       log.debug(f"wrong len ({len(c)}) for hbbft: {c}")
 
     # always set these, that way they get reset when out of CG
-    HBBFT_PERF.labels('hbbft_perf','Penalty', miner_name).set(hval.get('pen_val', 0))
-    HBBFT_PERF.labels('hbbft_perf','BBA_Total', miner_name).set(hval.get('bba_tot', 0))
-    HBBFT_PERF.labels('hbbft_perf','BBA_Votes', miner_name).set(hval.get('bba_votes', 0))
-    HBBFT_PERF.labels('hbbft_perf','Seen_Total', miner_name).set(hval.get('seen_tot', 0))
-    HBBFT_PERF.labels('hbbft_perf','Seen_Votes', miner_name).set(hval.get('seen_votes', 0))
-    HBBFT_PERF.labels('hbbft_perf','BBA_Last', miner_name).set(hval.get('bba_last_val', 0))
-    HBBFT_PERF.labels('hbbft_perf','Seen_Last', miner_name).set(hval.get('seen_last_val', 0))
-    HBBFT_PERF.labels('hbbft_perf','Tenure', miner_name).set(hval.get('tenure', 0))
+    HBBFT_PERF_PENALTY.set(hval.get('pen_val', 0))
+    HBBFT_PERF_BBA_TOTAL.set(hval.get('bba_tot', 0))
+    HBBFT_PERF_BBA_VOTES.set(hval.get('bba_votes', 0))
+    HBBFT_PERF_SEEN_TOTAL.set(hval.get('seen_tot', 0))
+    HBBFT_PERF_SEEN_VOTES.set(hval.get('seen_votes', 0))
+    HBBFT_PERF_BBA_LAST.set(hval.get('bba_last_val', 0))
+    HBBFT_PERF_SEEN_LAST.set(hval.get('seen_last_val', 0))
+    HBBFT_PERF_TENTURE.set(hval.get('tenure', 0))
 
 def collect_peer_book(docker_container, miner_name):
   # peer book -s output
